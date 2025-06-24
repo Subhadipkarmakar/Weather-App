@@ -8,6 +8,27 @@
   --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
   --border-radius: 20px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Light theme variables */
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-muted: #6c757d;
+  --border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --primary-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  --bg-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  --card-bg: rgba(45, 55, 72, 0.95);
+  --text-primary: #f7fafc;
+  --text-secondary: #e2e8f0;
+  --text-muted: #a0aec0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* ✅ General Styles */
@@ -17,10 +38,11 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background: var(--primary-gradient);
+  background: var(--bg-gradient);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  transition: var(--transition);
 }
 
 /* ✅ Animated Background Elements */
@@ -435,6 +457,83 @@ h1 {
   }
 }
 
+/* ✅ Control Buttons Styling */
+.controls-left, .controls-right {
+  display: flex;
+  gap: 10px;
+}
+
+.unit-toggle button, .theme-toggle button {
+  border-radius: 25px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.unit-toggle button:hover, .theme-toggle button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.unit-toggle button.active {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: white;
+}
+
+/* Dark theme adjustments for cards */
+[data-theme="dark"] .search-card,
+[data-theme="dark"] #results .card,
+[data-theme="dark"] .forecast-card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .stat-card {
+  background: linear-gradient(135deg, rgba(45, 55, 72, 0.9), rgba(45, 55, 72, 0.7));
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .stat-value {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .custom-input {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .custom-input::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .input-group {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .input-group:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .temp-high {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] #results h2 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] #results p {
+  color: var(--text-secondary);
+}
+
 /* ✅ Stats Section Enhancement */
 .stats-section {
   animation: fadeInUp 1s ease-out 0.3s both;
@@ -600,6 +699,16 @@ h1 {
   
   .btn-gradient {
     padding: 12px 20px;
+  }
+  
+  .controls-left, .controls-right {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .unit-toggle button, .theme-toggle button {
+    font-size: 0.8rem;
+    padding: 6px 12px;
     font-size: 1rem;
   }
   

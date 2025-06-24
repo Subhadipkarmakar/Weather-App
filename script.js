@@ -1,11 +1,111 @@
 const apiKey = 'f2ae4518049c4677b57145931252206';
 
-
-
+// Global state
+let currentWeatherData = null;
+let currentUnit = 'celsius'; // 'celsius' or 'fahrenheit'
+let currentTheme = 'light'; // 'light' or 'dark'
 
 const searchBtn = document.getElementById('searchBtn');
 const cityInput = document.getElementById('cityInput');
 const results = document.getElementById('results');
+const unitToggle = document.getElementById('unitToggle');
+const unitLabel = document.getElementById('unitLabel');
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+
+// Utility functions
+function celsiusToFahrenheit(celsius) {
+  return (celsius * 9/5) + 32;
+}
+
+function fahrenheitToCelsius(fahrenheit) {
+  return (fahrenheit - 32) * 5/9;
+}
+
+function formatTemperature(temp, unit) {
+  if (unit === 'fahrenheit') {
+    return `${Math.round(celsiusToFahrenheit(temp))}°F`;
+  }
+  return `${Math.round(temp)}°C`;
+}
+
+function getWindSpeed(kph, unit) {
+  if (unit === 'fahrenheit') {
+    // Convert km/h to mph
+    return Math.round(kph * 0.621371);
+  }
+  return kph;
+}
+
+function getWindSpeedUnit(unit) {
+  return unit === 'fahrenheit' ? 'mph' : 'km/h';
+}
+
+function getVisibility(km, unit) {
+  if (unit === 'fahrenheit') {
+    // Convert km to miles
+    return Math.round(km * 0.621371);
+  }
+  return km;
+}
+
+function getVisibilityUnit(unit) {
+  return unit === 'fahrenheit' ? 'mi' : 'km';
+}
+
+// Theme management
+function initializeTheme() {
+  const savedTheme = localStorage.getItem('weatherAppTheme') || 'light';
+  currentTheme = savedTheme;
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  updateThemeButton();
+}
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  localStorage.setItem('weatherAppTheme', currentTheme);
+  updateThemeButton();
+}
+
+function updateThemeButton() {
+  if (currentTheme === 'dark') {
+    themeIcon.className = 'fas fa-sun me-2';
+    themeLabel.textContent = 'Light';
+  } else {
+    themeIcon.className = 'fas fa-moon me-2';
+    themeLabel.textContent = 'Dark';
+  }
+}
+
+// Unit management
+function initializeUnit() {
+  const savedUnit = localStorage.getItem('weatherAppUnit') || 'celsius';
+  currentUnit = savedUnit;
+  updateUnitButton();
+}
+
+function toggleUnit() {
+  currentUnit = currentUnit === 'celsius' ? 'fahrenheit' : 'celsius';
+  localStorage.setItem('weatherAppUnit', currentUnit);
+  updateUnitButton();
+  
+  // Re-render weather data if available
+  if (currentWeatherData) {
+    displayWeatherData(currentWeatherData);
+  }
+}
+
+function updateUnitButton() {
+  if (currentUnit === 'fahrenheit') {
+    unitLabel.textContent = '°F';
+    unitToggle.classList.add('active');
+  } else {
+    unitLabel.textContent = '°C';
+    unitToggle.classList.remove('active');
+  }
+}
 
 // Enhanced search functionality with better UX
 async function searchWeather() {
@@ -40,9 +140,23 @@ async function searchWeather() {
       throw new Error('City not found. Please check the spelling and try again.');
     }
     const data = await response.json();
-    const { location, current, forecast } = data;
+    currentWeatherData = data; // Store for unit conversion
+    displayWeatherData(data);
+  } catch (error) {
+    results.innerHTML = `
+      <div class="text-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        ${error.message}
+      </div>
+    `;
+  }
+}
 
-    // Generate forecast cards
+// Separate function to display weather data (for unit conversion)
+function displayWeatherData(data) {
+  const { location, current, forecast } = data;
+
+  // Generate forecast cards
     const forecastCards = forecast.forecastday.map((day, index) => {
       const date = new Date(day.date);
       const dayName = index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' });
@@ -57,8 +171,8 @@ async function searchWeather() {
               <img src="https:${day.day.condition.icon}" alt="${day.day.condition.text}" class="img-fluid" />
             </div>
             <div class="forecast-temps mb-2">
-              <div class="temp-high fw-bold">${Math.round(day.day.maxtemp_c)}°</div>
-              <div class="temp-low text-muted">${Math.round(day.day.mintemp_c)}°</div>
+              <div class="temp-high fw-bold">${formatTemperature(day.day.maxtemp_c, currentUnit)}</div>
+              <div class="temp-low text-muted">${formatTemperature(day.day.mintemp_c, currentUnit)}</div>
             </div>
             <div class="forecast-condition small text-muted">${day.day.condition.text}</div>
             <div class="forecast-details mt-2 pt-2 border-top">
@@ -91,10 +205,10 @@ async function searchWeather() {
                   <i class="fas fa-thermometer-half me-2"></i>Current Temperature
                 </h4>
                 <div class="current-temp display-1 fw-bold text-primary mb-2 temperature-display">
-                  ${Math.round(current.temp_c)}°C
+                  ${formatTemperature(current.temp_c, currentUnit)}
                 </div>
                 <div class="feels-like h6 text-muted mb-2">
-                  Feels like ${Math.round(current.feelslike_c)}°C
+                  Feels like ${formatTemperature(current.feelslike_c, currentUnit)}
                 </div>
                 <div class="current-condition h5 text-muted mb-4">${current.condition.text}</div>
               </div>
@@ -115,15 +229,15 @@ async function searchWeather() {
                   <div class="col-6 col-md-3">
                     <div class="stat-card p-3 rounded-3" data-stat="wind">
                       <i class="fas fa-wind text-success mb-2"></i>
-                      <div class="stat-value fw-bold">${current.wind_kph}</div>
-                      <div class="stat-label small text-muted">Wind (km/h)</div>
+                      <div class="stat-value fw-bold">${getWindSpeed(current.wind_kph, currentUnit)}</div>
+                      <div class="stat-label small text-muted">Wind (${getWindSpeedUnit(currentUnit)})</div>
                     </div>
                   </div>
                   <div class="col-6 col-md-3">
                     <div class="stat-card p-3 rounded-3" data-stat="visibility">
                       <i class="fas fa-eye text-info mb-2"></i>
-                      <div class="stat-value fw-bold">${current.vis_km}</div>
-                      <div class="stat-label small text-muted">Visibility (km)</div>
+                      <div class="stat-value fw-bold">${getVisibility(current.vis_km, currentUnit)}</div>
+                      <div class="stat-label small text-muted">Visibility (${getVisibilityUnit(currentUnit)})</div>
                     </div>
                   </div>
                   <div class="col-6 col-md-3">
@@ -166,14 +280,6 @@ async function searchWeather() {
         </div>
       </div>
     `;
-  } catch (error) {
-    results.innerHTML = `
-      <div class="text-danger">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        ${error.message}
-      </div>
-    `;
-  }
 }
 
 // Event listeners
@@ -184,4 +290,16 @@ cityInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     searchWeather();
   }
+});
+
+// Unit toggle event listener
+unitToggle.addEventListener('click', toggleUnit);
+
+// Theme toggle event listener
+themeToggle.addEventListener('click', toggleTheme);
+
+// Initialize theme and unit on page load
+document.addEventListener('DOMContentLoaded', () => {
+  initializeTheme();
+  initializeUnit();
 });
